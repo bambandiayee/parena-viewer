@@ -148,6 +148,22 @@ header {
 .specs-item:last-child {
   border-bottom: none;
 }
+.refresh-button {
+  margin-left: auto;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  background-color: var(--color-primary);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.refresh-button:hover {
+  opacity: 0.9;
+}
 
 .color-preview {
   width: 20px;
