@@ -35,6 +35,8 @@ const copyCssButton = document.getElementById('copy-css-button');
 
 // Au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
+  console.log("Chargement de la page...");
+  
   // Récupérer l'ID du projet depuis l'URL
   const urlParams = new URLSearchParams(window.location.search);
   const projectId = urlParams.get('projectId');
@@ -43,6 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
     showError('Aucun ID de projet spécifié dans l\'URL');
     return;
   }
+
+  console.log("ID du projet:", projectId);
 
   const header = document.querySelector('header');
   const refreshButton = document.createElement('button');
@@ -68,9 +72,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Fonction pour charger un projet depuis Supabase
-// Dans la fonction loadProject de viewer.js
 async function loadProject(projectId) {
   try {
+    console.log("Chargement du projet:", projectId);
+    
     // 1. Récupérer les informations du projet
     const projectResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/projects?id=eq.${projectId}&select=*`,
@@ -83,6 +88,8 @@ async function loadProject(projectId) {
     );
     
     const projects = await projectResponse.json();
+    console.log("Données du projet:", projects);
+    
     if (projects.length === 0) {
       throw new Error('Projet non trouvé');
     }
@@ -92,6 +99,8 @@ async function loadProject(projectId) {
     
     // 2. Récupérer les frames du projet
     try {
+      console.log("Récupération des frames pour le projet:", projectId);
+      
       const framesResponse = await fetch(
         `${SUPABASE_URL}/rest/v1/frames?project_id=eq.${projectId}&select=*`,
         {
@@ -103,6 +112,7 @@ async function loadProject(projectId) {
       );
       
       const frames = await framesResponse.json();
+      console.log("Frames récupérées:", frames);
       
       // 3. Gérer le cas où il n'y a pas encore de frames
       if (frames.length === 0) {
@@ -142,6 +152,7 @@ async function loadProject(projectId) {
 
 // Fonction pour afficher une erreur
 function showError(message) {
+  console.error("Erreur affichée:", message);
   loadingElement.style.display = 'none';
   errorContainer.style.display = 'block';
   errorMessage.textContent = message;
@@ -183,7 +194,9 @@ function renderFramesList(frames) {
 }
 
 // Fonction pour charger une frame
-function loadFrame(frame) {
+async function loadFrame(frame) {
+  console.log("Chargement de la frame:", frame);
+  
   currentFrame = frame;
   elementsMap = {};
   
@@ -192,26 +205,56 @@ function loadFrame(frame) {
   framePreview.style.height = `${frame.height}px`;
   
   // Charger l'image
-  framePreview.innerHTML = `<img src="data:image/png;base64,${frame.image_data}" alt="${frame.name}" width="${frame.width}" height="${frame.height}">`;
+  if (frame.image_data) {
+    framePreview.innerHTML = `<img src="data:image/png;base64,${frame.image_data}" alt="${frame.name}" width="${frame.width}" height="${frame.height}">`;
+  } else {
+    framePreview.innerHTML = `<div class="no-image">Image non disponible</div>`;
+  }
   
-  // Ajouter les éléments sélectionnables
-  frame.elements.forEach(element => {
-    const div = document.createElement('div');
-    div.className = 'selectable-element';
-    div.dataset.elementId = element.id;
-    div.style.left = `${element.x}px`;
-    div.style.top = `${element.y}px`;
-    div.style.width = `${element.width}px`;
-    div.style.height = `${element.height}px`;
+  try {
+    // Récupérer les éléments de cette frame depuis Supabase
+    console.log("Récupération des éléments pour la frame:", frame.id);
     
-    div.addEventListener('click', (e) => {
-      e.stopPropagation();
-      selectElement(element);
+    const elementsResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/elements?frame_id=eq.${frame.id}&select=*`,
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+    
+    const elements = await elementsResponse.json();
+    console.log("Éléments récupérés:", elements);
+    
+    // Ajouter les éléments sélectionnables
+    elements.forEach(element => {
+      const div = document.createElement('div');
+      div.className = 'selectable-element';
+      div.dataset.elementId = element.id;
+      div.style.left = `${element.x}px`;
+      div.style.top = `${element.y}px`;
+      div.style.width = `${element.width}px`;
+      div.style.height = `${element.height}px`;
+      
+      div.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectElement(element);
+      });
+      
+      framePreview.appendChild(div);
+      elementsMap[element.id] = element;
     });
     
-    framePreview.appendChild(div);
-    elementsMap[element.id] = element;
-  });
+  } catch (error) {
+    console.error('Erreur lors du chargement des éléments:', error);
+    // Afficher un message d'erreur pour l'utilisateur
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = "Impossible de charger les éléments de cette frame.";
+    framePreview.appendChild(errorDiv);
+  }
   
   // Réinitialiser la sélection
   currentElement = null;
@@ -244,6 +287,8 @@ function centerFrameInCanvas() {
 
 // Fonction pour sélectionner un élément
 function selectElement(element) {
+  console.log("Élément sélectionné:", element);
+  
   currentElement = element;
   
   // Mettre à jour l'apparence des éléments
@@ -252,7 +297,10 @@ function selectElement(element) {
   });
   
   if (element) {
-    document.querySelector(`.selectable-element[data-element-id="${element.id}"]`).classList.add('selected');
+    const selectedElement = document.querySelector(`.selectable-element[data-element-id="${element.id}"]`);
+    if (selectedElement) {
+      selectedElement.classList.add('selected');
+    }
   }
   
   updateElementSpecs(element);
@@ -275,11 +323,11 @@ function updateElementSpecs(element) {
   }
   
   // Informations de base
-  elementName.textContent = element.name;
-  elementWidth.textContent = `${element.width}px`;
-  elementHeight.textContent = `${element.height}px`;
-  elementX.textContent = `${element.x}px`;
-  elementY.textContent = `${element.y}px`;
+  elementName.textContent = element.name || 'Élément sans nom';
+  elementWidth.textContent = `${element.width || 0}px`;
+  elementHeight.textContent = `${element.height || 0}px`;
+  elementX.textContent = `${element.x || 0}px`;
+  elementY.textContent = `${element.y || 0}px`;
   
   // Couleurs
   elementColor.textContent = element.color || '-';
@@ -302,7 +350,10 @@ function updateElementSpecs(element) {
 
 // Fonction pour générer le code CSS
 function generateCssCode(element) {
-  let css = `.${element.name.toLowerCase().replace(/\s+/g, '-')} {\n`;
+  // Créer un nom de classe CSS valide à partir du nom de l'élément
+  const className = element.name ? element.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'element';
+  
+  let css = `.${className} {\n`;
   css += `  width: ${element.width}px;\n`;
   css += `  height: ${element.height}px;\n`;
   
