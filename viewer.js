@@ -194,6 +194,7 @@ function renderFramesList(frames) {
 }
 
 // Fonction pour charger une frame
+// Fonction pour charger une frame
 async function loadFrame(frame) {
   console.log("Chargement de la frame:", frame);
   
@@ -204,11 +205,11 @@ async function loadFrame(frame) {
   framePreview.style.width = `${frame.width}px`;
   framePreview.style.height = `${frame.height}px`;
   
-  // Charger l'image
+  // Charger l'image si disponible
   if (frame.image_data) {
     framePreview.innerHTML = `<img src="data:image/png;base64,${frame.image_data}" alt="${frame.name}" width="${frame.width}" height="${frame.height}">`;
   } else {
-    framePreview.innerHTML = `<div class="no-image">Image non disponible</div>`;
+    framePreview.innerHTML = `<div class="no-image" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background-color:#f0f0f0;">Image non disponible</div>`;
   }
   
   try {
@@ -229,23 +230,36 @@ async function loadFrame(frame) {
     console.log("Éléments récupérés:", elements);
     
     // Ajouter les éléments sélectionnables
-    elements.forEach(element => {
-      const div = document.createElement('div');
-      div.className = 'selectable-element';
-      div.dataset.elementId = element.id;
-      div.style.left = `${element.x}px`;
-      div.style.top = `${element.y}px`;
-      div.style.width = `${element.width}px`;
-      div.style.height = `${element.height}px`;
-      
-      div.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectElement(element);
+    if (elements && Array.isArray(elements)) {
+      elements.forEach(element => {
+        const div = document.createElement('div');
+        div.className = 'selectable-element';
+        div.dataset.elementId = element.id;
+        div.style.left = `${element.x}px`;
+        div.style.top = `${element.y}px`;
+        div.style.width = `${element.width}px`;
+        div.style.height = `${element.height}px`;
+        
+        div.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectElement(element);
+        });
+        
+        framePreview.appendChild(div);
+        elementsMap[element.id] = element;
       });
-      
-      framePreview.appendChild(div);
-      elementsMap[element.id] = element;
-    });
+    } else {
+      console.warn("Aucun élément trouvé ou format de données invalide");
+      const noElementsDiv = document.createElement('div');
+      noElementsDiv.className = 'no-elements';
+      noElementsDiv.textContent = "Aucun élément trouvé pour cette frame";
+      noElementsDiv.style.position = "absolute";
+      noElementsDiv.style.top = "10px";
+      noElementsDiv.style.left = "10px";
+      noElementsDiv.style.padding = "5px";
+      noElementsDiv.style.backgroundColor = "rgba(255,255,255,0.8)";
+      framePreview.appendChild(noElementsDiv);
+    }
     
   } catch (error) {
     console.error('Erreur lors du chargement des éléments:', error);
@@ -253,6 +267,11 @@ async function loadFrame(frame) {
     const errorDiv = document.createElement('div');
     errorDiv.className = 'error-message';
     errorDiv.textContent = "Impossible de charger les éléments de cette frame.";
+    errorDiv.style.position = "absolute";
+    errorDiv.style.top = "10px";
+    errorDiv.style.left = "10px";
+    errorDiv.style.padding = "10px";
+    errorDiv.style.backgroundColor = "rgba(255,0,0,0.2)";
     framePreview.appendChild(errorDiv);
   }
   
