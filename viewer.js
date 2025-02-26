@@ -43,6 +43,25 @@ document.addEventListener('DOMContentLoaded', () => {
     showError('Aucun ID de projet spécifié dans l\'URL');
     return;
   }
+
+  const header = document.querySelector('header');
+  const refreshButton = document.createElement('button');
+  refreshButton.textContent = 'Rafraîchir';
+  refreshButton.className = 'refresh-button';
+  refreshButton.style.marginLeft = 'auto'; // Pour placer le bouton à droite
+  refreshButton.style.padding = '8px 16px';
+  refreshButton.style.borderRadius = '4px';
+  refreshButton.style.border = 'none';
+  refreshButton.style.backgroundColor = '#18a0fb';
+  refreshButton.style.color = 'white';
+  refreshButton.style.cursor = 'pointer';
+  
+  refreshButton.addEventListener('click', () => {
+    // Recharger la page
+    location.reload();
+  });
+
+  header.appendChild(refreshButton);
   
   // Charger le projet
   loadProject(projectId);
