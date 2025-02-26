@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Fonction pour charger un projet depuis Supabase
+// Dans la fonction loadProject de viewer.js
 async function loadProject(projectId) {
   try {
     // 1. Récupérer les informations du projet
@@ -79,20 +80,6 @@ async function loadProject(projectId) {
           'Authorization': `Bearer ${SUPABASE_KEY}`
         }
       }
-
-      // Dans la fonction loadProject
-if (frames.length === 0) {
-  // Afficher un message indiquant que les frames sont en cours de traitement
-  const infoMessage = document.createElement('div');
-  infoMessage.className = 'info-message';
-  infoMessage.textContent = 'Les frames sont en cours de traitement. Veuillez réessayer dans quelques instants.';
-  projectContent.appendChild(infoMessage);
-  
-  // Masquer le chargement et afficher le contenu
-  loadingElement.style.display = 'none';
-  projectContent.style.display = 'flex';
-  return;
-}
     );
     
     const projects = await projectResponse.json();
@@ -104,22 +91,9 @@ if (frames.length === 0) {
     projectTitle.textContent = currentProject.name;
     
     // 2. Récupérer les frames du projet
-    const framesResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/frames?project_id=eq.${projectId}&select=*`,
-      {
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`
-        }
-      }
-    );
-    
-    const frames = await framesResponse.json();
-    
-    // 3. Pour chaque frame, récupérer ses éléments
-    for (const frame of frames) {
-      const elementsResponse = await fetch(
-        `${SUPABASE_URL}/rest/v1/elements?frame_id=eq.${frame.id}&select=*`,
+    try {
+      const framesResponse = await fetch(
+        `${SUPABASE_URL}/rest/v1/frames?project_id=eq.${projectId}&select=*`,
         {
           headers: {
             'apikey': SUPABASE_KEY,
@@ -128,18 +102,40 @@ if (frames.length === 0) {
         }
       );
       
-      frame.elements = await elementsResponse.json();
+      const frames = await framesResponse.json();
+      
+      // 3. Gérer le cas où il n'y a pas encore de frames
+      if (frames.length === 0) {
+        // Afficher un message d'attente
+        const waitingMessage = document.createElement('div');
+        waitingMessage.className = 'waiting-message';
+        waitingMessage.innerHTML = `
+          <div class="info-box">
+            <h3>Projet créé avec succès!</h3>
+            <p>Les frames n'ont pas encore été sauvegardées ou sont en cours de traitement.</p>
+            <p>Vous pouvez rafraîchir la page dans quelques instants pour voir si les frames sont disponibles.</p>
+          </div>
+        `;
+        
+        // Masquer le chargement et afficher le message
+        loadingElement.style.display = 'none';
+        document.getElementById('main-container').appendChild(waitingMessage);
+        return;
+      }
+      
+      // 4. Si des frames sont disponibles, les afficher normalement
+      renderFramesList(frames);
+      
+      // Masquer le chargement et afficher le contenu
+      loadingElement.style.display = 'none';
+      projectContent.style.display = 'flex';
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des frames:', error);
+      throw new Error('Impossible de charger les frames: ' + error.message);
     }
-    
-    // 4. Mettre à jour l'interface
-    renderFramesList(frames);
-    
-    // Masquer le chargement et afficher le contenu
-    loadingElement.style.display = 'none';
-    projectContent.style.display = 'flex';
-    
   } catch (error) {
-    console.error('Erreur lors du chargement du projet:', error);
+    console.error('Erreur:', error);
     showError(error.message);
   }
 }
