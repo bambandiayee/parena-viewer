@@ -90,6 +90,32 @@ header {
   display: flex;
   overflow: hidden;
 }
+.waiting-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.info-box {
+  background-color: #e9f5fe;
+  border: 1px solid #18a0fb;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  max-width: 500px;
+}
+
+.info-box h3 {
+  color: #18a0fb;
+  margin-bottom: 15px;
+}
+
+.info-box p {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
 
 .canvas {
   flex: 1;
