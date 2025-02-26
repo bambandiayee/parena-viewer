@@ -60,6 +60,20 @@ async function loadProject(projectId) {
           'Authorization': `Bearer ${SUPABASE_KEY}`
         }
       }
+
+      // Dans la fonction loadProject
+if (frames.length === 0) {
+  // Afficher un message indiquant que les frames sont en cours de traitement
+  const infoMessage = document.createElement('div');
+  infoMessage.className = 'info-message';
+  infoMessage.textContent = 'Les frames sont en cours de traitement. Veuillez réessayer dans quelques instants.';
+  projectContent.appendChild(infoMessage);
+  
+  // Masquer le chargement et afficher le contenu
+  loadingElement.style.display = 'none';
+  projectContent.style.display = 'flex';
+  return;
+}
     );
     
     const projects = await projectResponse.json();
