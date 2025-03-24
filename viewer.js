@@ -1,6 +1,6 @@
 // Configuration de Supabase
-const SUPABASE_URL = 'https://wpxrdgggteymjicizgfh.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndweHJkZ2dndGV5bWppY2l6Z2ZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1NDAyNjEsImV4cCI6MjA1NjExNjI2MX0.edb1mPHTUaK3kfezlgFjYn_heAB49DdFfADaCMRj6ns';
+const SUPABASE_URL = '';
+const SUPABASE_KEY = '';
 
 // Variables globales
 let currentProject = null;
